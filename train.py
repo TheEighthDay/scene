@@ -82,7 +82,7 @@ class TrainModel(object):
             samples_per_epoch=samples_per_epoch,
             epochs=epochs,
             verbose=1,
-            validation_data=generate_arrays_from_file(FILENAME_V),
+            validation_data=generate_batch(FILENAME_V，500),
             validation_steps=100,
             shuffle=True,
             callbacks=[model_checkpoint]
@@ -104,7 +104,7 @@ class TrainModel(object):
             samples_per_epoch=samples_per_epoch,
             epochs=epochs,
             verbose=1,
-            validation_data=generate_arrays_from_file(FILENAME_V),
+            validation_data=generate_batch(FILENAME_V，500),
             validation_steps=100,
             shuffle=True,
             callbacks=[model_checkpoint]
