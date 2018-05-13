@@ -1,3 +1,5 @@
+#coding:utf-8
+
 import numpy as np
 import tensorflow as tf
 import cv2
@@ -5,8 +7,8 @@ import csv, random
 from os import path
 from tqdm import tqdm
 
-NUM_TRAIN=15623
-NUM_VALIDATION=1000
+# NUM_TRAIN=15611
+# NUM_VALIDATION=1000
 FILENAME_V="validation.tfrecords"
 FILENAME="train.tfrecords"
 
@@ -41,14 +43,14 @@ def load_train_data(csv_results): #将csv读取信息转化为图片地址和lab
     validation_labels=[]
 
     print('Reading train data_info...')
-    for i in range(NUM_TRAIN):
+    for i in range(11628):
         file_id, category_id = csv_results[i]
         file_path = 'image_scene_training/data/'+ file_id + '.jpg'
         train_filepaths.append(file_path)
         train_labels.append(int(category_id))
     print('Done')
     print('Reading validation data_info...')
-    for i in range(NUM_TRAIN,NUM_TRAIN+NUM_VALIDATION):
+    for i in range(11628,16611):
         file_id, category_id = csv_results[i]
         file_path = 'image_scene_training/data/'+ file_id + '.jpg'
         validation_filepaths.append(file_path)
@@ -63,7 +65,7 @@ def gen_tfrecords(filepaths,labels,tffilename):  #生成tfrecords文件
     labels=one_hot(labels)
     for i in tqdm(range(len(filepaths))):
         image=cv2.imread(filepaths[i])
-        image=cv2.resize(image,(224,224))
+        image=cv2.resize(image,(299,299))
         # print(type(image[0][0][0]),type(labels[i][0]))
         image_raw = image.tostring()
         label_raw = labels[i].tostring()
@@ -130,11 +132,14 @@ def generate_batch(filename, batch_size=1): #取tfrecords产出batch
     )
 
     # tf.decode_raw可以将字符串解析成图像对应的像素数组
-    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [224,224,3])
+    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [299,299,3])   #修改flaot和标准化
+    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 
-    image = distort_color(image,np.random.randint(4))
+    image = distort_color(image,np.random.randint(4)) 
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
+    
+    
     label = tf.reshape(tf.decode_raw(features['label_raw'], tf.int32), [20])
 
     sess = tf.Session()
@@ -155,17 +160,66 @@ def generate_batch(filename, batch_size=1): #取tfrecords产出batch
         ys=np.array(ys)
         yield (xs, ys)
 
+def generate_val_batch(filename, batch_size=1): #取tfrecords产出batch
+    # 创建一个reader来读取TFRecord文件中的样例
+    reader = tf.TFRecordReader()
+    # 创建一个队列来维护输入文件列表，
+    filename_queue = tf.train.string_input_producer([filename])
+    # 从文件中读出一个样例，也可以使用read_up_to函数一次性读出多个样例
+    _, serialized_example = reader.read(filename_queue)
+    # 解析读入的一个样例，如果需要解析多个样例，可以使用parse_example函数
+    features = tf.parse_single_example(
+        serialized_example,
+        {
+            # TensorFlow提供两种不同的属性解析方法。一种方法是tf.FixedLenFeature,
+            # 这种方法解析的结果为一个Tensor。另一种方法是tf.VarLenFeature，这种方法
+            # 得到的解析结果为SparseTensor，用于处理稀疏数据。这里解析数据的格式需要和
+            # 上面程序写入数据的格式一致。
+            'label_raw': tf.FixedLenFeature([], tf.string),
+            'image_raw': tf.FixedLenFeature([],tf.string)
 
+        }
+    )
 
+    # tf.decode_raw可以将字符串解析成图像对应的像素数组
+    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [299,299,3])   #修改flaot和标准化
+    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    
+    label = tf.reshape(tf.decode_raw(features['label_raw'], tf.int32), [20])
+
+    sess = tf.Session()
+    # 启动多线程处理输入数据
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+    # 每次运行可以读取TFRecord文件中的一个样例
+    while 1:
+        xs, ys = [], []
+        for i in range(batch_size):
+            # 读取一组数据
+            x, y = sess.run([image, label])
+            xs.append(x)
+            ys.append(y)
+            
+        # 转换为数组，归一化
+        xs= (np.array(xs, dtype=np.float32))/255. #标准化
+        ys=np.array(ys)
+        yield (xs, ys)
 
 if __name__ == '__main__':
     is_exist()
 
-# xs,ys=generate_batch(FILENAME).__next__()
-# print(xs[0])
-# cv2.imshow("rwr",xs[0])
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+
+# i=0
+# for xs,ys in generate_batch(FILENAME_V):
+#     i+=1
+#     # print(ys,xs)
+#     print(np.argmax(ys[0]))
+#     cv2.imshow("rwr"+str(i),xs[0])
+#     cv2.waitKey(0)
+#     cv2.destroyAllWindows()
+#     if(i>5):
+#     	break
+
 #
 # image=cv2.imread("image_scene_training/data/000de15c-165a-11e8-aaec-00163e025669.jpg")
 # image=image_resize(image)
