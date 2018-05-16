@@ -1,7 +1,7 @@
 #coding:utf-8
 import os
 import glob
-# import matplotlib.pyplot as plt
+
 
 from keras import __version__
 from keras.applications.inception_resnet_v2 import InceptionResNetV2,preprocess_input
@@ -19,11 +19,11 @@ def get_nb_files(directory):
     for dr in dirs:
       cnt += len(glob.glob(os.path.join(r, dr + "/*")))
   return cnt
-# get_nb_files('F:/文件/scene_classification/image_scene_training/train')
+
 
 IM_WIDTH, IM_HEIGHT = 299, 299 #InceptionV3指定的图片尺寸
 FC_SIZE = 1024                # 全连接层的节点个数
-NB_IV3_LAYERS_TO_FREEZE = 500  # 冻结层的数量
+NB_IV3_LAYERS_TO_FREEZE = 450  # 冻结层的数量
 
 
 train_dir = 'image_scene_training/train'  # 训练集数据
@@ -94,20 +94,3 @@ shuffle=True,
 callbacks=[model_checkpoint]
 )
 
-# def plot_training(history):
-#   acc = history.history['acc']
-#   val_acc = history.history['val_acc']
-#   loss = history.history['loss']
-#   val_loss = history.history['val_loss']
-#   epochs = range(len(acc))
-#   plt.plot(epochs, acc, 'r.')
-#   plt.plot(epochs, val_acc, 'r')
-#   plt.title('Training and validation accuracy')
-#   plt.figure()
-#   plt.plot(epochs, loss, 'r.')
-#   plt.plot(epochs, val_loss, 'r-')
-#   plt.title('Training and validation loss')
-#   plt.savefig("examples_continue.jpg") 
-
-# # 训练的acc_loss图
-# plot_training(history_tl)

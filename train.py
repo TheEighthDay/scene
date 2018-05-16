@@ -25,7 +25,7 @@ def get_nb_files(directory):
 
 IM_WIDTH, IM_HEIGHT = 299, 299 #InceptionV3指定的图片尺寸
 FC_SIZE = 1024                # 全连接层的节点个数
-NB_IV3_LAYERS_TO_FREEZE = 500  # 冻结层的数量
+NB_IV3_LAYERS_TO_FREEZE = 400  # 冻结层的数量
 
 
 train_dir = 'image_scene_training/train'  # 训练集数据
@@ -77,7 +77,7 @@ def add_new_last_layer(base_model, nb_classes):
 	x = base_model.output
 	x = GlobalAveragePooling2D()(x)
 	x = Dense(FC_SIZE, activation='relu')(x) #new FC layer, random init
-	x = Dropout(0.5)(x)
+	x = Dropout(0.3)(x)
 	predictions = Dense(nb_classes, activation='softmax')(x) #new softmax layer
 	model = Model(input=base_model.input, output=predictions)
 	return model

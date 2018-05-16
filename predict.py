@@ -18,7 +18,7 @@ def load_test_data(csv_results): #将csv读取信息转化为图片地址
     print('Reading test data_info...')
     for i in range(len(csv_results)):
         file_id= csv_results[i]
-        file_path = 'image_scene_test_a_v2/a/data/'+ file_id[0] + '.jpg'  #猜测文件名image_scene_testing
+        file_path = 'image_scene_test_a_v2/a/data/'+ file_id[0] + '.jpg'  
         test_filepaths.append(file_path)
     print('Done')
   
@@ -31,7 +31,6 @@ def predict_top3(test_filepaths):
 
     summ=len(test_filepaths)
     batch=int(summ/100)
-    # print("batch="+str(batch))
 
     ending=[]
     for i in range(100):
@@ -55,8 +54,6 @@ def predict_top3(test_filepaths):
         img=cv2.imread(test_filepaths[k])
         img=cv2.resize(img,(299,299))
         img=img/255.
-        # cv2.imshow("kankan",img)
-        # cv2.waitKey(0)
         last.append(img)
     predict=model.predict(np.array(last))
     for i in range(len(last)):
@@ -72,7 +69,6 @@ def predict_top3(test_filepaths):
 if __name__ == '__main__':
 
     csv_results=read_csvlist("image_scene_test_a_v2/a/list.csv")  #文件名为猜测，还没放数据
-    # print(csv_results)
     test_filepaths=load_test_data(csv_results)
     print("test_number="+str(len(test_filepaths)))
     top3_ending=predict_top3(test_filepaths)
@@ -80,5 +76,5 @@ if __name__ == '__main__':
     ending=[]
     for i in range(len(top3_ending)):
         ending.append([csv_results[i][0],str(top3_ending[i][0]),str(top3_ending[i][1]),str(top3_ending[i][2])])
-    write_csvlist("testending.csv",ending,header=['FILE_ID','CATEGORY_ID0','CATEGORY_ID1','CATEGORY_ID2'])
+    write_csvlist("ending.csv",ending,header=['FILE_ID','CATEGORY_ID0','CATEGORY_ID1','CATEGORY_ID2'])
     
