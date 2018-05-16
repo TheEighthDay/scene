@@ -7,10 +7,10 @@ import csv, random
 from os import path
 from tqdm import tqdm
 
-# NUM_TRAIN=15611
-# NUM_VALIDATION=1000
-FILENAME_V="validation.tfrecords"
-FILENAME="train.tfrecords"
+NUM_TRAIN=15611
+NUM_VALIDATION=1000
+FILENAME_V="validation_224.tfrecords"
+FILENAME="train_224.tfrecords"
 
 def read_csvlist(listfile):  #读取csv文件
     print("reading  "+listfile)
@@ -26,6 +26,48 @@ def read_csvlist(listfile):  #读取csv文件
     print("done")
     return results
 #[['2b2b344f-1c85-11e8-aaf5-00163e025669', '0'], ['1dcd5677-1c83-11e8-aaf2-00163e025669', '0']]
+def split_dir(csvlist):
+    summ=(len(csvlist))
+    print(summ)
+    listt=[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
+    for i in range(summ):
+        listt[int(csvlist[i][1])].append(csvlist[i][0])
+    
+    for i in range(20):  #乱序
+        random.shuffle(listt[i])
+
+    for i in range(20):
+        print(listt[i])
+
+    for table in range(20):
+        if len(listt[table])>700:
+            for x in tqdm(listt[table]):
+                img=cv2.imread('image_scene_training/data/'+ str(x) + '.jpg')
+                cv2.imwrite("image_scene_training/train/"+str(table)+"/"+str(x) + '.jpg',img)
+        else:
+            for x in tqdm(listt[table]):
+                img=cv2.imread('image_scene_training/data/'+ str(x) + '.jpg')
+                cv2.imwrite("image_scene_training/train/"+str(table)+"/"+str(x) + '.jpg',img)
+            need=700-len(listt[table])
+            gen_picture(need,listt[table],table)
+
+
+def gen_picture(need,filepath,table):
+    for i in range(need):
+        img=cv2.imread('image_scene_training/data/'+filepath[np.random.randint(len(filepath))]+'.jpg')
+        img=cv2.flip(img, np.random.randint(3))
+        cv2.imwrite("image_scene_training/train/"+str(table)+"/"+str(i) + 'add.jpg',img)
+
+
+
+
+    # for i in tqdm(range(len(csvlist)-1000)):
+    #     img=cv2.imread('image_scene_training/data/'+ csvlist[i][0] + '.jpg')
+    #     cv2.imwrite("image_scene_training/train/"+csvlist[i][1]+"/"+csvlist[i][0] + '.jpg',img)
+    # for i in range(len(csvlist)-1000,len(csvlist)):
+    #     img=cv2.imread('image_scene_training/data/'+ csvlist[i][0] + '.jpg')
+    #     cv2.imwrite("image_scene_training/validation/"+csvlist[i][1]+"/"+csvlist[i][0] + '.jpg',img)
+
 def one_hot(labels):  #onehot编码
     sess = tf.Session()
     batch_size = tf.size(labels)
@@ -43,14 +85,14 @@ def load_train_data(csv_results): #将csv读取信息转化为图片地址和lab
     validation_labels=[]
 
     print('Reading train data_info...')
-    for i in range(11628):
+    for i in range(NUM_TRAIN):
         file_id, category_id = csv_results[i]
         file_path = 'image_scene_training/data/'+ file_id + '.jpg'
         train_filepaths.append(file_path)
         train_labels.append(int(category_id))
     print('Done')
     print('Reading validation data_info...')
-    for i in range(11628,16611):
+    for i in range(NUM_TRAIN,NUM_TRAIN+NUM_VALIDATION):
         file_id, category_id = csv_results[i]
         file_path = 'image_scene_training/data/'+ file_id + '.jpg'
         validation_filepaths.append(file_path)
@@ -132,12 +174,12 @@ def generate_batch(filename, batch_size=1): #取tfrecords产出batch
     )
 
     # tf.decode_raw可以将字符串解析成图像对应的像素数组
-    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [299,299,3])   #修改flaot和标准化
+    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [224,224,3])   #修改flaot和标准化
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
 
-    image = distort_color(image,np.random.randint(4)) 
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.random_flip_up_down(image)
+    image = distort_color(image,np.random.randint(4))  #亮度饱和度色相对比度 随机排列变换
+    image = tf.image.random_flip_left_right(image)    #左右反转
+    image = tf.image.random_flip_up_down(image)   #上下反转
     
     
     label = tf.reshape(tf.decode_raw(features['label_raw'], tf.int32), [20])
@@ -182,7 +224,7 @@ def generate_val_batch(filename, batch_size=1): #取tfrecords产出batch
     )
 
     # tf.decode_raw可以将字符串解析成图像对应的像素数组
-    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [299,299,3])   #修改flaot和标准化
+    image = tf.reshape(tf.decode_raw(features['image_raw'], tf.uint8), [224,224,3])   #修改flaot和标准化
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
     
     label = tf.reshape(tf.decode_raw(features['label_raw'], tf.int32), [20])
@@ -198,15 +240,15 @@ def generate_val_batch(filename, batch_size=1): #取tfrecords产出batch
             # 读取一组数据
             x, y = sess.run([image, label])
             xs.append(x)
-            ys.append(y)
-            
+            ys.append(y)   
         # 转换为数组，归一化
         xs= (np.array(xs, dtype=np.float32))/255. #标准化
         ys=np.array(ys)
         yield (xs, ys)
 
 if __name__ == '__main__':
-    is_exist()
+    csvlist=read_csvlist("image_scene_training/list.csv")
+    split_dir(csvlist)
 
 
 # i=0
