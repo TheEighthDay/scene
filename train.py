@@ -4,8 +4,9 @@ import glob
 # import matplotlib.pyplot as plt
 
 from keras import __version__
-# from keras.applications.inception_v3 import InceptionV3, preprocess_input
-from keras.applications.inception_resnet_v2 import InceptionResNetV2,preprocess_input
+# from keras.applications.inception_v3 import InceptionV3
+from keras.applications.densenet import DenseNet201,preprocess_input
+# from keras.applications.inception_resnet_v2 import InceptionResNetV2,preprocess_input
 from keras.callbacks import ModelCheckpoint
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D,Input,Concatenate,Dropout,GlobalMaxPooling2D
@@ -25,7 +26,7 @@ def get_nb_files(directory):
 
 IM_WIDTH, IM_HEIGHT = 299, 299 #InceptionV3指定的图片尺寸
 FC_SIZE = 1024                # 全连接层的节点个数
-NB_IV3_LAYERS_TO_FREEZE = 400  # 冻结层的数量
+NB_IV3_LAYERS_TO_FREEZE = 600  # 冻结层的数量
 
 
 train_dir = 'image_scene_training/train'  # 训练集数据
@@ -77,13 +78,15 @@ def add_new_last_layer(base_model, nb_classes):
 	x = base_model.output
 	x = GlobalAveragePooling2D()(x)
 	x = Dense(FC_SIZE, activation='relu')(x) #new FC layer, random init
-	x = Dropout(0.3)(x)
+	x = Dropout(0.4)(x)
 	predictions = Dense(nb_classes, activation='softmax')(x) #new softmax layer
 	model = Model(input=base_model.input, output=predictions)
 	return model
 
 
 def setup_to_finetune(model):
+    print('layers='+str(len(model.layers)))
+    
     for layer in model.layers[:NB_IV3_LAYERS_TO_FREEZE]:
         layer.trainable = False
     for layer in model.layers[NB_IV3_LAYERS_TO_FREEZE:]:
@@ -103,6 +106,7 @@ def inception():
     base_model = InceptionV3(weights=None, include_top=False) # 预先要下载no_top模型
     print("loading inceptionv3")
     base_model.load_weights("inception_v3_weights_tf_dim_ordering_tf_kernels_notop.h5")  
+    
     print("done")
     model = setup_to_finetune(base_model)
     model = add_new_last_layer(model, nb_classes)              # 从基本no_top模型上添加新层
@@ -119,7 +123,28 @@ def inception_resnet():
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 
-# def fuse():效果不好
+
+def densenet():
+    base_model = DenseNet201(weights=None, include_top=False,input_shape=(299,299,3)) # 预先要下载no_top模型
+    print("loading densenet")
+    base_model.load_weights("densenet201_weights_tf_dim_ordering_tf_kernels_notop.h5")  
+    print("done")
+    base_model = setup_to_finetune(base_model)
+
+
+    input_layer=Input(shape=(299,299,3)) 
+    x = base_model(input_layer)
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(FC_SIZE, activation='relu')(x) #new FC layer, random init
+    x = Dropout(0.5)(x)
+    predictions = Dense(nb_classes, activation='softmax')(x) #new softmax layer
+    model = Model(input=input_layer, output=predictions)
+
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    return model
+
+# def fuse():
 #     input_layer=Input(shape=(299,299,3)) 
 
 #     inceptionv3 = InceptionV3(weights=None, include_top=False,input_shape=(299,299,3)) # 预先要下载no_top模型
@@ -168,9 +193,9 @@ def inception_resnet():
 
 
 
-model=inception_resnet()
+model=densenet()
 
-model_checkpoint = ModelCheckpoint('model_new.h5', monitor='val_loss',verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint('model_new2.h5', monitor='val_loss',verbose=1, save_best_only=True)
 # 模式一训练
 history_tl = model.fit_generator(
 train_generator,

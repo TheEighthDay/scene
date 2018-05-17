@@ -72,16 +72,16 @@ train_generator = train_datagen.flow_from_directory(train_dir,target_size=(IM_WI
 validation_generator = test_datagen.flow_from_directory(val_dir,target_size=(IM_WIDTH, IM_HEIGHT),batch_size=batch_size,class_mode='categorical')
 
 
-learning_rate = 1e-5
+learning_rate = 1e-4
 decay_rate = learning_rate / nb_epoch
 momentum = 0.8
 
 
-model=load_model("model_new.h5")
+model=load_model("model_new2.h5")
 optimizer=SGD(lr=learning_rate, momentum=momentum, decay=decay_rate, nesterov=False)
 model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
 
-model_checkpoint = ModelCheckpoint('model_new.h5', monitor='val_loss',verbose=1, save_best_only=True)
+model_checkpoint = ModelCheckpoint('model_new2.h5', monitor='val_loss',verbose=1, save_best_only=True)
 
 history_tl = model.fit_generator(
 train_generator,
