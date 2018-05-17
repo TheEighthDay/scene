@@ -39,7 +39,8 @@
 /validation_top3.py  
 /validation_top3_fuse.py  
 /test_write_csv.py  
-/ending.csv
+/一些参数设定.txt  
+/ending.csv  
 /model.h5  
 /model_new.h5  
 /model_new2.h5    
@@ -49,10 +50,10 @@
   
 ## 运行方法详解
 ### 1. 运行preprocess.py将对/image_scene_training/data中的图片进行处理，生成训练集和验证集图片在/image_scene_training/train和/image_scene_training/validation目录下所对应的类别文件夹0到19，对于某类图片数量少则根据此类原有图片进行上下或者左右反转生成一定数量新图片。  
-### 2. 运行train.py进行训练
+### 2. 运行train.py进行训练，注意对于不同模型的训练，model=inception()需将函数inception（）改成对应网络的函数,具体参数的设定参看&nbsp;&nbsp;一些参数设定.txt。
 ### 3. 运行train_continue.py 将学习器改为SGD，降低lr继续训练。
 ### 4. 运行predict.py 进行预测并生成ending.csv
-### 5. h5文件下载地址为：
+### 5. h5及图片文件夹，文件下载地址为：https://pan.baidu.com/s/14Eu0PIRQJi3MX4ncaOnkDQ 密码rzil
 
 
 

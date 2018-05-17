@@ -1,0 +1,9 @@
+inception_v3 350 ¶³172 batch=32 epoch=10 steps_per_epoch=100 nb_val_samples=20 model.h5
+inception_renet_v2 780  ¶³400 batch=48 epoch=10 steps_per_epoch=100 nb_val_samples=20  model_new.h5
+densenet 702 ¶³ 600 batch=48 epoch=10 steps_per_epoch=100 nb_val_samples=20  model_new2.h5
+
+
+0.945714285714
+0.917142857143
+0.931428571429
+
